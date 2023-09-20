@@ -1,0 +1,1 @@
+# this is algo8 template for all projects
