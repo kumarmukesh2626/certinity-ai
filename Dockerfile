@@ -10,18 +10,21 @@ RUN apt-get -y update
 
 RUN pip install --upgrade pip
 
-RUN apt install -y libgl1-mesa-glx
+RUN apt-get install -y libgl1-mesa-glx
 
-RUN apt install -y libglib2.0-0
+RUN apt-get install -y libglib2.0-0
 
-RUN apt install nano
+RUN apt-get install -y nano
+
+RUN pip install flask
 
 RUN pip install flask_sqlalchemy
 
-RUN pip install PyMysql
+RUN pip install pymysql  # For MySQL database
 
-RUN pip install psycopg2-binary
+RUN pip install psycopg2-binary  # For PostgreSQL database
 
 EXPOSE 5002
 
-CMD ["python","alert_app.py"]
+CMD ["python", "alert_app.py"]
+
