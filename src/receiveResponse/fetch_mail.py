@@ -20,52 +20,58 @@ db_sql = DatabaseHandler()
 # dbcolumns = ['timestamp','receivedDateTime', 'sender', 'receivedOn', 'subject', 'documentTitle', 'po', 'invoicedFrom', 'invoicedTo', 'invoiceDate','dueDate', 'taxId', 'totalBeforeTax','tax', 'totalAfterTax','currency', 'reject','validate','markedForReview','email','invoicePdf','status','comment','validatedOn','reviewedBy','poPDF']
 
 def get_access_token():
-    # Token request configuration
-    token_url = "https://login.microsoftonline.com/08b7cfeb-897e-469b-9436-974e694a8df2/oauth2/v2.0/token"
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    data = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "scope": scope,
-        "grant_type": "password",
-        "username": username,
-        "password": password
-    }
+    try:
+        # Token request configuration
+        token_url = "https://login.microsoftonline.com/08b7cfeb-897e-469b-9436-974e694a8df2/oauth2/v2.0/token"
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        data = {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": scope,
+            "grant_type": "password",
+            "username": username,
+            "password": password
+        }
 
-    # Send token request
-    response = requests.post(token_url, headers=headers, data=data)
-    response.raise_for_status()
+        # Send token request
+        response = requests.post(token_url, headers=headers, data=data)
+        response.raise_for_status()
 
-    # Extract and return the access token
-    access_token = response.json().get("access_token")
-    return access_token
+        # Extract and return the access token
+        access_token = response.json().get("access_token")
+        return access_token
+    except Exception as e:
+        print(e)
 
 def fetch_emails(filter_params):
-    # Microsoft Graph API endpoint for fetching emails
-    graph_api_endpoint = "https://graph.microsoft.com/v1.0/users/demo@algo8.ai/messages"
-
-    # Fetch emails using Microsoft Graph API
-    while True:
-        access_token = get_access_token()
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
-
-        params = {
-            "$select": "sender,receivedDateTime,subject,hasAttachments,body,conversationId",
-            "$filter": f"{filter_params}"
-        }
+    try:
+        # Microsoft Graph API endpoint for fetching emails
+        graph_api_endpoint = "https://graph.microsoft.com/v1.0/users/demo@algo8.ai/messages"
 
         # Fetch emails using Microsoft Graph API
-        response = requests.get(graph_api_endpoint, headers=headers, params=params)
-        if response.status_code == 401:  # Token expired
-            time.sleep(1)  # Sleep for a second to avoid excessive token requests
-            continue
-        response.raise_for_status()
-        emails = response.json().get("value", [])
-        return emails
+        while True:
+            access_token = get_access_token()
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
 
+            params = {
+                "$select": "sender,receivedDateTime,subject,hasAttachments,body,conversationId",
+                "$filter": f"{filter_params}"
+            }
+
+            # Fetch emails using Microsoft Graph API
+            page_endpoint = f'{graph_api_endpoint}?$filter={filter_params}&$top=10000'
+            response = requests.get(page_endpoint, headers=headers)
+            if response.status_code == 401:  # Token expired
+                time.sleep(1)  # Sleep for a second to avoid excessive token requests
+                continue
+            response.raise_for_status()
+            emails = response.json().get("value", [])
+            return emails
+    except Exception as e:
+        print(e)
 
 def process_email(email):
     try:
@@ -73,20 +79,20 @@ def process_email(email):
         email_data = []  # List to store email-related data for each row
         dt = datetime.now()
         timestamp_data = dt.date()
-        columns = ['sender','received_date','subject','repliedByEmployee']
+        columns = ['sender','sentDateTime','received_date','subject','repliedByEmployee']
         conversation_id = email.get('conversationId') 
         if conversation_id:
             email_id = email['id']
+            sentDateTime = email['sentDateTime']
             sender = email['sender']['emailAddress']['address']
             received_date = email['receivedDateTime']
+            
             subject = email['subject']
             email_body = email['body']['content']
-            
-            print("subject",subject)
             if subject.startswith('Re:'):
                 clean_context = clean_body_mail(email_body)
                 # print(clean_context[1])
-                values = [sender,received_date,subject,clean_context[1]]
+                values = [sender,sentDateTime,received_date,subject,clean_context[1]]
                 df = pd.DataFrame([values],columns=columns)
                 return df
     except Exception as e:
