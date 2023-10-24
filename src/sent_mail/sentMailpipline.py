@@ -5,9 +5,7 @@ import json
 from io import BytesIO
 import json
 import os
-# from tika import parser
 import pandas as pd
-# import pdftotext
 import time
 import pandas as pd
 from PIL import Image
@@ -16,11 +14,12 @@ import sys
 from src.sent_mail.sendMail import send_mail
 # alert_url ='http://localhost:5005/alert'
 from datetime import datetime
+
 db = DatabaseHandler()
     
 import requests
 
-def certinaityAI(month,projectDescription):
+def certinaityAI(projectDescription,month=6):
     try:
         query1 = """ SELECT
             employeeId,
@@ -48,13 +47,13 @@ def certinaityAI(month,projectDescription):
         current_timestamp = datetime.now()
         data = db.fetch_data(query1)
         print(data)
-        data['timesheetDate'] = pd.to_datetime(data['timesheetDate'])
-
+        # data['timesheetDate'] = pd.to_datetime(data['timesheetDate'])
+        # print(data['timesheetDate'])
         # Fill NULL (nan) values in 'spocName' with 'Unknown' or any other placeholder value
         data['spocName'].fillna('Unknown', inplace=True)
 
         # Convert 'timesheetDate' to datetime
-        data['timesheetDate'] = pd.to_datetime(data['timesheetDate'])
+        data['timesheetDate'] = pd.to_datetime(data['timesheetDate'],format='%y-%m-%d')
 
         # Define a custom aggregation function to keep the first projectDescription
         def first_project_description(x):
@@ -100,12 +99,12 @@ def certinaityAI(month,projectDescription):
             project_task = row[('projectTaskDescription_<lambda>')]
             timesheet_effort = row[('timesheetEfforts_sum')]
             spoc_email_id = row[('spocEmailId_spoc_email')]
-            to_email_id = ['demo@algo8.ai']
-            to_cc_id =  ['mukesh.kumar@algo8.ai'] #[spoc_email_id]
+            to_email_id = ['mukesh.kumar@algo8.ai']
+            to_cc_id =  [] #[spoc_email_id]
             # Format the start and end dates as "Month Dayst - Month Dayth"
             timesheet_date_range = f"{timesheet_start_date_min.strftime('%B')} {timesheet_start_date_min.day}st - {timesheet_end_date_max.strftime('%B')} {timesheet_end_date_max.day}th"
             print(timesheet_date_range)
-            values = [current_timestamp,spoc_name,spoc_email_id,project_description,project_task,timesheet_effort,'Null']
+            values = [current_timestamp,spoc_name,to_email_id,project_description,project_task,timesheet_effort,'Null']
             # payload = {
             #             'employeeName': spoc_name,
             #             'email': to_email_id,
@@ -126,11 +125,10 @@ def certinaityAI(month,projectDescription):
             try:
                 send_mail(spoc_name, to_email_id, to_cc_id, timesheet_date_range, project_description, project_task, timesheet_effort)
                 print('Alert sent successfully',project_description)
-                print("grouped_data")
                 db.run(columns,values,'naggingDetails')
             except Exception as e:
                 print(e)
                
-
+        return True
     except Exception as e:
         print(e)
