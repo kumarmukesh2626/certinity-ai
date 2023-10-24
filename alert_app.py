@@ -11,27 +11,19 @@ import pandas as pd
 
 app = Flask(__name__)
 
-@app.route('/naggMailSent', methods=["GET"])
+@app.route('/naggMailSent', methods=["POST"])
 def fetch_details():
-    if request.method == "GET":
+    if request.method == "POST":
         try:
             data = request.json
             projectDescription = data["projectDescription"]
-            time_period = data['timePeriod']
-            nagMailSent = certinaityAI(time_period,projectDescription)
-            if nagMailSent:
-                return {
+            # time_period = data['timePeriod']
+            nagMailSent = certinaityAI(projectDescription)
+            return {
                     "funcName": "alert()",
                     "msg": "Alert Sent Successfully",
                     "status": "OK",
                     "statusCode": 200
-                }
-            else:
-                return {
-                    "funcName": "alert()",
-                    "msg": f"Alert Sending Failed",
-                    "status": "Error",
-                    "statusCode": 500
                 }
         except Exception as error:
             return {
@@ -67,9 +59,9 @@ def alert():
             else:
                 return {
                     "funcName": "alert()",
-                    "msg": f"Alert Sending Failed",
-                    "status": "Error",
-                    "statusCode": 500
+                    "msg": f"Alert Sent Successfully",
+                    "status": "OK",
+                    "statusCode": 200
                 }
         except Exception as error:
             return {
