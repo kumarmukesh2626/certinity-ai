@@ -9,7 +9,7 @@ from email import encoders
 from datetime import datetime
 
 config_Url = configparser.ConfigParser()
-config_Url.read('/home/shivam/Desktop/Certinaty AI/nagging/config.ini')
+config_Url.read('config/config.ini')
 sender_mail = config_Url["Mail Related"]["sender_mail"] 
 sender_password = config_Url["Mail Related"]["sender_password"] 
 path = config_Url["Mail Related"]["path"] 
@@ -41,7 +41,7 @@ def send_mail(employeeName, to_email, cc_email,timesheetPeriod,projectDescriptio
         message['From'] = 'Contact <{sender}>'.format(sender = gmail)
         message['To'] = ", ".join(to_email)
         message['Cc'] = ", ".join(cc_email) if cc_email else ''
-        message['Subject'] =  'nagging test'#employeeName + '-' + timsheetEffort
+        message['Subject'] =  projectDescription + '-' +  str(timsheetEffort)
         cf.success_log(200, "Generating Body", "smtp_server", path)
         body = f'''
 
