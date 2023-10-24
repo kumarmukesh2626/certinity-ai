@@ -24,6 +24,18 @@ RUN pip install pymysql  # For MySQL database
 
 RUN pip install psycopg2-binary  # For PostgreSQL database
 
+RUN pip install requests  # For sending HTTP requests
+
+RUN pip install pillow  # For working with images (PIL)
+
+# If you need Apache Tika for text extraction from documents
+
+ # If you need to extract text from PDFs
+
+RUN pip install openpyxl  # For working with Excel files
+
+RUN pip install pandas  # For data manipulation with Pandas
+
 EXPOSE 5002
 
 CMD ["python", "alert_app.py"]
